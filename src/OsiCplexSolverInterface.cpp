@@ -1,7 +1,7 @@
 #include "OsiCplexSolverInterface.hpp"
 #include <CoinMpsIO.hpp>
 #include <cplex.h>
-#include <algorithm>
+//#include <algorithm>
 
 // default constructor
 OsiCplexSolverInterface::OsiCplexSolverInterface(): OsiCpxSolverInterface() {
@@ -24,50 +24,86 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
 						 OsiLorentzConeType & type,
                                                  int & numMembers,
                                                  int *& members) const {
-  // //const MSKenv_t env = OsiMskSolverInterface::getEnvironmentPtr();
-  // const MSKtask_t task = OsiMskSolverInterface::getMutableLpPtr();
-  // MSKrescodee res;
-  // MSKconetypee conetype;
-  // double conepar;
-  // int nummem;
-  // int * submem;
-  // // get conic constraint
-  // res = MSK_getcone(task, index, &conetype, &conepar, &nummem, submem);
-  // if (res!=MSK_RES_OK) {
-  //   std::cerr << "Mosek status " << res << std::endl;
-  //   throw std::exception();
-  // }
-  // numMembers = nummem;
-  // // who will free members?
-  // members = new int[numMembers];
-  // std::copy(submem, submem+numMembers, members);
-  // if (conetype==MSK_CT_QUAD) {
-  //   type = OSI_QUAD;
-  // }
-  // else if (conetype==MSK_CT_RQUAD) {
-  //   type = OSI_RQUAD;
-  // }
+  int ok = 0;
+  // cplex status, 0 for success
+  int status;
+  // number of linear part nonzeros
+  int linnz;
+  int linsurplus = 0;
+  // number of quadratic part nonzeros
+  int qnz;
+  numMembers = 0;
+  CPXLPptr lp = getMutableLpPtr();
+  CPXENVptr env = getEnvironmentPtr();
+  // detect array lengths
+  status = CPXgetqconstr(env, lp, &linnz, &qnz, NULL, NULL,
+                         NULL, NULL, 0, &linsurplus,
+                         NULL, NULL, NULL, 0, &numMembers, index);
+  if (status==0) {
+    // means number of variables in cone is 0.
+    return;
+  }
+  else if (status == CPXERR_NEGATIVE_SURPLUS) {
+    // linear or quadratic cone size was not enough
+    if (numMembers==0) {
+      // cone size was enough, means no member in cone
+      return;
+    }
+    else {
+      // cone size is greater than 0
+      numMembers = -numMembers;
+    }
+  }
+  // allocate memory for quadratic part
+  int * qrow = new int[numMembers];
+  int * qcol = new int[numMembers];
+  double * qval = new double[numMembers];
+  int qsurplus;
+  // call get constraints again with updated cone size
+  status = CPXgetqconstr(env, lp, &linnz, &qnz, NULL, NULL,
+                         NULL, NULL, 0, &linsurplus,
+                         qrow, qcol, qval, numMembers, &qsurplus, index);
+  if (status!=0 && status!=CPXERR_NEGATIVE_SURPLUS) {
+    std::cerr << "Cplex status error!" << std::endl;
+    throw std::exception();
+  }
+  if (qsurplus<0) {
+    std::cerr << "This should not happen. Cplex cheated!" << std::endl;
+    throw std::exception();
+  }
+  members = qcol;
+  delete[] qrow;
+  if (qval[0]==-1.0 && qval[1]==1.0) {
+    type = OSI_QUAD;
+  }
+  else {
+    std::cerr << "This part is not implemented yet!" << std::endl;
+    throw std::exception();
+  }
+  delete[] qval;
 }
 
 // add conic constraint in lorentz cone form
 void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
 						 int numMembers,
 					       const int * members) {
-  // MSKrescodee res;
-  // MSKconetypee conetype;
-  // const MSKtask_t task = OsiMskSolverInterface::getLpPtr();
-  // double conepar = 0.0;
-  // if (type==OSI_QUAD) {
-  //   conetype = MSK_CT_QUAD;
-  // }
-  // else {
-  //   conetype = MSK_CT_RQUAD;
-  // }
-  // res = MSK_appendcone(task, conetype, conepar, numMembers, members);
-  // if (res!=MSK_RES_OK) {
-  //   std::cerr << "Mosek status " << res << std::endl;
-  //   throw std::exception();
-  // }
+  if (type==OSI_RQUAD) {
+    std::cerr << "Rotated Cones are not implemented yet!" << std::endl;
+    throw std::exception();
+  }
+  int status;
+  CPXLPptr lp = getMutableLpPtr();
+  CPXENVptr env = getEnvironmentPtr();
+  double * qval = new double[numMembers];
+  qval[0] = -1.0;
+  std::fill_n(qval+1, numMembers-1, 1.0);
+  status = CPXaddqconstr (env, lp, 0, numMembers,
+                          0.0, 'L', NULL, NULL,
+                          members, members, qval, NULL);
+  if (status != 0) {
+    std::cerr << "Cplex function is not successful." << std::endl;
+    throw std::exception();
+  }
 }
 
 // add conic constraint in |Ax-b| <= dx-h form
@@ -81,14 +117,8 @@ void OsiCplexSolverInterface::addConicConstraint(CoinPackedMatrix const * A,
 
 
 void OsiCplexSolverInterface::removeConicConstraint(int index) {
-  // MSKrescodee res;
-  // MSKtask_t task = OsiMskSolverInterface::getLpPtr();
-  // int num = 1;
-  // int * subset;
-  // subset = new int[1];
-  // subset[0] = index;
-  // res = MSK_removecones(task, num, subset);
-  // delete[] subset;
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 void OsiCplexSolverInterface::modifyConicConstraint(int index,
@@ -101,86 +131,32 @@ void OsiCplexSolverInterface::modifyConicConstraint(int index,
 
 
 int OsiCplexSolverInterface::getNumCones() const {
-  // MSKrescodee res;
-  // MSKtask_t task = OsiMskSolverInterface::getMutableLpPtr();
-  // int num;
-  // res = MSK_getnumcone(task, &num);
-  // if (res!=MSK_RES_OK) {
-  //   std::cerr << "Mosek status " << res << std::endl;
-  //   throw std::exception();
-  // }
-  // return num;
+
+  CPXLPptr lp = getMutableLpPtr();
+  CPXENVptr env = getEnvironmentPtr();
+  int n = CPXgetnumqconstrs(env, lp);
+  return n;
 }
 
 int OsiCplexSolverInterface::getConeSize(int i) const {
-  // const MSKtask_t task = OsiMskSolverInterface::getMutableLpPtr();
-  // MSKrescodee res;
-  // MSKconetypee conetype;
-  // double conepar;
-  // int nummem;
-  // // get conic constraint information
-  // res = MSK_getconeinfo(task, i, &conetype, &conepar, &nummem);
-  // if (res!=MSK_RES_OK) {
-  //   std::cerr << "Mosek status " << res << std::endl;
-  //   throw std::exception();
-  // }
-  // return nummem;
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 OsiConeType OsiCplexSolverInterface::getConeType(int i) const {
-  // int num_cones = getNumCones();
-  // if (i>=num_cones) {
-  //   std::cerr << __PRETTY_FUNCTION__ << "Cone " << i << " does not exist!"
-  //             << std::endl;
-  //   throw std::exception();
-  // }
-  // return OSI_LORENTZ;
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 OsiLorentzConeType OsiCplexSolverInterface::getLorentzConeType(int i) const {
-  // const MSKtask_t task = OsiMskSolverInterface::getMutableLpPtr();
-  // MSKrescodee res;
-  // MSKconetypee conetype;
-  // double conepar;
-  // int nummem;
-  // OsiLorentzConeType type;
-  // // get conic constraint information
-  // res = MSK_getconeinfo(task, i, &conetype, &conepar, &nummem);
-  // if (res!=MSK_RES_OK) {
-  //   std::cerr << "Mosek status " << res << std::endl;
-  //   throw std::exception();
-  // }
-  // if (conetype==MSK_CT_QUAD) {
-  //   type = OSI_QUAD;
-  // }
-  // else if (conetype==MSK_CT_RQUAD) {
-  //   type = OSI_RQUAD;
-  // }
-  // else {
-  //   std::cerr << __PRETTY_FUNCTION__ << " Unknown mosek cone type!"
-  //             << std::endl;
-  //   throw std::exception();
-  // }
-  // return type;
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 // fills array of cone sizes.
 void OsiCplexSolverInterface::getConeSize(int * size) const {
-  // const MSKtask_t task = OsiMskSolverInterface::getMutableLpPtr();
-  // MSKrescodee res;
-  // MSKconetypee conetype;
-  // double conepar;
-  // int nummem;
-  // int num_cones = getNumCones();
-  // for (int i=0; i<num_cones; ++i) {
-  //   // get conic constraint information
-  //   res = MSK_getconeinfo(task, i, &conetype, &conepar, &nummem);
-  //   if (res!=MSK_RES_OK) {
-  //     std::cerr << "Mosek status " << res << std::endl;
-  //     throw std::exception();
-  //   }
-  //   size[i] = nummem;
-  // }
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 // fills array of cone types.
@@ -199,19 +175,70 @@ void OsiCplexSolverInterface::getConeType(OsiLorentzConeType * type) const {
 }
 
 OsiConicSolverInterface * OsiCplexSolverInterface::clone(bool copyData) const {
-  // we need to clone task and env, I think
-  // OsiMskSolverInterface::clone will be enough.
-  // OsiMosekSolverInterface * new_solver = new OsiMosekSolverInterface(*this);
-  // return new_solver;
+  std::cerr << "Not implemented yet!" << std::cerr;
+  throw std::exception();
 }
 
 OsiCplexSolverInterface::~OsiCplexSolverInterface() {
-  // free cplex pointer? or ~OsiCpxSolverInterface handles that.
 }
 
 int OsiCplexSolverInterface::readMps(const char * filename,
 				     const char * extension) {
-  // todo(aykut) this reads linear part and conic part
   OsiConicSolverInterface::readMps(filename, extension);
-  // what will happen to loadProblem?
+}
+
+void OsiCplexSolverInterface::initialSolve() {
+  //todo(aykut) I am not sure what switchToLp() does.
+  switchToLP();
+  CPXLPptr lp = getMutableLpPtr(OsiCpxSolverInterface::FREECACHED_RESULTS);
+  CPXENVptr env = getEnvironmentPtr();
+  double objoffset;
+  double primalobjlimit;
+  double dualobjlimit;
+  if (messageHandler()->logLevel() == 0)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 0);
+  else if (messageHandler()->logLevel() == 1)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 1);
+  else if (messageHandler()->logLevel() > 1)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 2);
+  getDblParam(OsiObjOffset, objoffset);
+  getDblParam(OsiPrimalObjectiveLimit, primalobjlimit);
+  getDblParam(OsiDualObjectiveLimit, dualobjlimit);
+  if (getObjSense() == +1) {
+    if (primalobjlimit < COIN_DBL_MAX)
+      CPXsetdblparam(env, CPX_PARAM_OBJLLIM, primalobjlimit + objoffset);
+    if (dualobjlimit > -COIN_DBL_MAX)
+      CPXsetdblparam(env, CPX_PARAM_OBJULIM, dualobjlimit + objoffset);
+  }
+  else {
+    if (primalobjlimit > -COIN_DBL_MAX)
+      CPXsetdblparam(env, CPX_PARAM_OBJULIM, primalobjlimit + objoffset);
+    if (dualobjlimit < COIN_DBL_MAX)
+      CPXsetdblparam(env, CPX_PARAM_OBJLLIM, dualobjlimit + objoffset);
+  }
+  int status = CPXhybbaropt(env, lp, CPX_ALG_NONE);
+  if (status!=0) {
+    std::cerr << "Cplex did not return 0 status." << std::endl;
+    throw std::exception();
+  }
+}
+
+//-----------------------------------------------------------------------------
+// resolve is same as initialSolve, no warm start capability.
+void OsiCplexSolverInterface::resolve() {
+  //todo(aykut) I am not sure what switchToLp() does.
+  switchToLP();
+  CPXLPptr lp = getMutableLpPtr( OsiCpxSolverInterface::FREECACHED_RESULTS );
+  CPXENVptr env = getEnvironmentPtr();
+  if (messageHandler()->logLevel() == 0)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 0);
+  else if (messageHandler()->logLevel() == 1)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 1);
+  else if (messageHandler()->logLevel() > 1)
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 2);
+  int status = CPXhybbaropt(env, lp, CPX_ALG_NONE);
+  if (status!=0) {
+    std::cerr << "Cplex did not return 0 status." << std::endl;
+    throw std::exception();
+  }
 }
