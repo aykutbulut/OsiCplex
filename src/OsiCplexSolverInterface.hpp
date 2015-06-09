@@ -2,7 +2,7 @@
 #define OsiCplexSolverInterface_H
 
 #include <OsiConicSolverInterface.hpp>
-#include <OsiCplexSolverInterface.hpp>
+#include <OsiCpxSolverInterface.hpp>
 #include <CoinPackedMatrix.hpp>
 
 class OsiCplexSolverInterface: virtual public OsiConicSolverInterface,
@@ -16,7 +16,7 @@ public:
   OsiCplexSolverInterface(const OsiCplexSolverInterface & other);
   // copy assignment operator
   OsiCplexSolverInterface & operator=(const OsiCplexSolverInterface & rhs);
-  virtual ~OsiMosekSolverInterface();
+  virtual ~OsiCplexSolverInterface();
   // get conic constraints
   virtual void getConicConstraint(int index, OsiLorentzConeType & type,
 				  int & numMembers,
@@ -41,21 +41,11 @@ public:
   virtual void getConeType(OsiLorentzConeType * type) const;
   virtual OsiConicSolverInterface * clone(bool copyData=true) const;
   virtual int readMps(const char * filename, const char * extension="mps");
-  // inherited from OsiMskSolverInterface <- OsiSolverInterface
-  // virtual void loadProblem (const CoinPackedMatrix &matrix, const double *collb,
-  // 			    const double *colub, const double *obj,
-  // 			    const double *rowlb, const double *rowub);
-  //virtual void initialSolve();
-  //virtual void resolve();
-  // CONSTRUCTORS
-  //OsiMosekSolverInterface();
-  // copy constructor
-  //OsiMosekSolverInterface(const OsiMosekSolverInterface & other);
-  // copy constructor from OsiMskSolverInterface
-  //OsiMosekSolverInterface(const OsiMskSolverInterface & other);
-  // assignment operator
-  //OsiMosekSolverInterface & operator=(const OsiMosekSolverInterface & rhs);
+  // virtual functions inherited from OsiSolverInterface
+  // re-define them since definitions in OsiCpxSolverInterface
+  // are for linear problems and does not work for conic problems
+  virtual void initialSolve();
+  virtual void resolve();
 };
 
 #endif
-
