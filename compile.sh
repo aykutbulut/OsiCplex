@@ -1,8 +1,8 @@
 #!/bin/bash
 mkdir build
 cd build
-cplex_inc_dir=/usr/local/mosek/7/tools/platform/linux64x86/h
-cplex_lib_dir=-L/usr/local/mosek/7/tools/platform/linux64x86/bin -lmosek64 -lmosekxx7_0 -lmosekjava7_0 -lmosekscopt7_0 -liomp5
+cplex_inc_dir=/usr/local/cplex/include/ilcplex
+cplex_lib_dir=-L/usr/local/cplex/lib/x86-64_linux/static_pic/ -lcplex -lm -lpthread
 build_dir=$PWD
 inc_dir=${build_dir%%/}/include
 lib_dir=${build_dir%%/}/lib
