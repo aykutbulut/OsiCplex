@@ -34,7 +34,7 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
   int qnz;
   numMembers = 0;
   CPXLPptr lp = getMutableLpPtr();
-  CPXENVptr env = getEnvironmentPtr();
+  CPXENVptr env = getMutableEnvironmentPtr();
   // detect array lengths
   status = CPXgetqconstr(env, lp, &linnz, &qnz, NULL, NULL,
                          NULL, NULL, 0, &linsurplus,
@@ -133,7 +133,7 @@ void OsiCplexSolverInterface::modifyConicConstraint(int index,
 int OsiCplexSolverInterface::getNumCones() const {
 
   CPXLPptr lp = getMutableLpPtr();
-  CPXENVptr env = getEnvironmentPtr();
+  CPXENVptr env = getMutableEnvironmentPtr();
   int n = CPXgetnumqconstrs(env, lp);
   return n;
 }
@@ -190,7 +190,7 @@ int OsiCplexSolverInterface::readMps(const char * filename,
 void OsiCplexSolverInterface::initialSolve() {
   //todo(aykut) I am not sure what switchToLp() does.
   switchToLP();
-  CPXLPptr lp = getMutableLpPtr(OsiCpxSolverInterface::FREECACHED_RESULTS);
+  CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
   double objoffset;
   double primalobjlimit;
@@ -228,7 +228,7 @@ void OsiCplexSolverInterface::initialSolve() {
 void OsiCplexSolverInterface::resolve() {
   //todo(aykut) I am not sure what switchToLp() does.
   switchToLP();
-  CPXLPptr lp = getMutableLpPtr( OsiCpxSolverInterface::FREECACHED_RESULTS );
+  CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
   if (messageHandler()->logLevel() == 0)
     CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 0);
