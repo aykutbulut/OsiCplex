@@ -7,12 +7,11 @@
 #############################################################################
 #                       Names and other basic things                        #
 #############################################################################
-
 AC_PREREQ(2.59)
-
 AC_INIT([OsiCplex],[0.0],[aykutblt@gmail.com])
 
-AC_COPYRIGHT([/*===========================================================================*/
+AC_COPYRIGHT([
+/*===========================================================================*/
 /*                                                                           */
 /* OsiCplex is developed by Aykut Bulut (aykutblt@gmail.com)                 */
 /*                                                                           */
@@ -24,11 +23,9 @@ AC_COPYRIGHT([/*================================================================
 /*===========================================================================*/
 ])
 
-AC_REVISION(0.9)
-
 # List one file in the package so that the configure script can test
 # whether the package is actually there
-AC_CONFIG_SRCDIR(configure.ac)
+AC_CONFIG_SRCDIR(src/OsiCplexSolverInterface.hpp)
 
 # Where should everything be installed by default?  Here, we want it
 # to be installed directly in 'bin', 'lib', 'include' subdirectories
@@ -37,47 +34,73 @@ AC_CONFIG_SRCDIR(configure.ac)
 AC_PREFIX_DEFAULT([`pwd`])
 
 #############################################################################
-#              Create the libtool script for the subdirectories             #
+#                         Standard build tool stuff                         #
 #############################################################################
+# Get the system type
+AC_CANONICAL_BUILD
 
-AC_COIN_CREATE_LIBTOOL
+# If this project depends on external projects, the Externals file in
+# the source root directory contains definition of where to find those
+# externals.  The following macro ensures that those externals are
+# retrieved by svn if they are not there yet.
+AC_COIN_PROJECTDIR_INIT(OsiCplex)
+
+# Check if user wants to produce debugging code
+AC_COIN_DEBUG_COMPILE(OsiCplex)
+
+# Get the name of the C++ compiler and appropriate compiler options
+AC_COIN_PROG_CXX
+
+# Initialize automake and libtool
+AC_COIN_INIT_AUTO_TOOLS
 
 #############################################################################
-#                  Check which subprojects are there                        #
+#                              COIN-OR components                           #
 #############################################################################
+AC_COIN_CHECK_PACKAGE(CoinUtils, [coinutils], [OsiCplexLib])
+if test $coin_has_coinutils != yes ; then
+  AC_MSG_ERROR([Required package CoinUtils not available.])
+fi
+AC_COIN_CHECK_PACKAGE(Osi,       [osi],       [OsiCplexLib])
+if test $coin_has_osi != yes ; then
+  AC_MSG_ERROR([Required package Osi not available.])
+fi
+AC_COIN_CHECK_PACKAGE(OsiCpx,    [osi-cplex],  [OsiCplexLib])
+if test $coin_has_osi != yes ; then
+  AC_MSG_ERROR([Required package OsiCpx not available.])
+fi
+AC_COIN_CHECK_PACKAGE(OsiConic,  [osiconic],  [OsiCplexLib])
+if test $coin_has_osiconic != yes ; then
+  AC_MSG_ERROR([Required package OsiConic not available.])
+fi
 
-dnl AC_COIN_MAIN_PACKAGEDIR(Blas,   ThirdParty,[daxpy.f])
-dnl AC_COIN_MAIN_PACKAGEDIR(Lapack, ThirdParty,[LAPACK/SRC/dlarf.f])
-dnl AC_COIN_MAIN_PACKAGEDIR(Metis,  ThirdParty,[metis-4.0/Lib/balance.c])
-dnl AC_COIN_MAIN_PACKAGEDIR(Mumps,  ThirdParty,[MUMPS/src/dmumps_part1.F])
-dnl AC_COIN_MAIN_PACKAGEDIR(Glpk,   ThirdParty,[glpk/src/glplpx01.c])
-dnl AC_COIN_MAIN_PACKAGEDIR(Sample, Data)
-dnl AC_COIN_MAIN_PACKAGEDIR(Netlib, Data)
-dnl AC_COIN_MAIN_PACKAGEDIR(CoinUtils)
-dnl AC_COIN_MAIN_PACKAGEDIR(Osi)
-dnl AC_COIN_MAIN_PACKAGEDIR(Clp)
-AC_COIN_MAIN_PACKAGEDIR(CoinUtils)
-AC_COIN_MAIN_PACKAGEDIR(Sample, Data)
-AC_COIN_MAIN_PACKAGEDIR(Osi)
-AC_COIN_MAIN_PACKAGEDIR(Blas,   ThirdParty,[daxpy.f])
-AC_COIN_MAIN_PACKAGEDIR(Lapack, ThirdParty,[LAPACK/SRC/dlarf.f])
-AC_COIN_MAIN_PACKAGEDIR(Glpk,   ThirdParty,[glpk/src/glplpx01.c])
+##############################################################################
+#                   VPATH links for example input files                      #
+##############################################################################
+# In case this is a VPATH configuration we need to make sure that the
+# input files for the examples are available in the VPATH directory.
+## AC_COIN_VPATH_LINK(examples/input.mps)
 
 #############################################################################
 #                  Check for doxygen                                        #
 #############################################################################
-
-AC_COIN_DOXYGEN(CoinUtils Osi)
+AC_COIN_DOXYGEN(CoinUtils Osi OsiCpx OsiConic)
 
 ##############################################################################
 #                   Finishing up by writing all the output                   #
 ##############################################################################
-
 # Here list all the files that configure should create (except for the
 # configuration header file)
 AC_CONFIG_FILES([Makefile\
-	src/Makefile])
+	examples/Makefile\
+	src/Makefile\
+	osicplex.pc
+	osicplex-uninstalled.pc])
+
 AC_CONFIG_FILES([doxydoc/doxygen.conf])
+
+# Here put the location and name of the configuration header file
+AC_CONFIG_HEADER([src/config.h src/config_osicplex.h])
 
 # Finally, we let configure write all the output...
 AC_COIN_FINALIZE

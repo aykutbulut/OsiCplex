@@ -14,6 +14,12 @@
 
 @SET_MAKE@
 
+# Copyright (C) 2015 Lehigh University.
+# All Rights Reserved.
+# This file is distributed under the Eclipse Public License.
+
+# Author:  Aykut Bulut, Lehigh University 2015-05-22
+
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -38,14 +44,16 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = src
-DIST_COMMON = $(include_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in
+DIST_COMMON = $(includecoin_HEADERS) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
+	$(srcdir)/config_osicplex.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
+CONFIG_HEADER = config.h config_osicplex.h
 CONFIG_CLEAN_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -53,14 +61,14 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includecoindir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libOsiCplex_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@DEPENDENCY_LINKING_TRUE@libOsiCplex_la_DEPENDENCIES =  \
+@DEPENDENCY_LINKING_TRUE@	$(am__DEPENDENCIES_1)
 am_libOsiCplex_la_OBJECTS = OsiCplexSolverInterface.lo
 libOsiCplex_la_OBJECTS = $(am_libOsiCplex_la_OBJECTS)
-DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -81,8 +89,8 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libOsiCplex_la_SOURCES)
 DIST_SOURCES = $(libOsiCplex_la_SOURCES)
-includeHEADERS_INSTALL = $(INSTALL_HEADER)
-HEADERS = $(include_HEADERS)
+includecoinHEADERS_INSTALL = $(INSTALL_HEADER)
+HEADERS = $(includecoin_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -90,7 +98,8 @@ ABSBUILDDIR = @ABSBUILDDIR@
 ACLOCAL = @ACLOCAL@
 ADD_CFLAGS = @ADD_CFLAGS@
 ADD_CXXFLAGS = @ADD_CXXFLAGS@
-ADD_FFLAGS = @ADD_FFLAGS@
+ALWAYS_FALSE_FALSE = @ALWAYS_FALSE_FALSE@
+ALWAYS_FALSE_TRUE = @ALWAYS_FALSE_TRUE@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
@@ -105,15 +114,33 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CDEFS = @CDEFS@
 CFLAGS = @CFLAGS@
+COINUTILS_CFLAGS = @COINUTILS_CFLAGS@
+COINUTILS_CFLAGS_INSTALLED = @COINUTILS_CFLAGS_INSTALLED@
+COINUTILS_DATA = @COINUTILS_DATA@
+COINUTILS_DATA_INSTALLED = @COINUTILS_DATA_INSTALLED@
+COINUTILS_DEPENDENCIES = @COINUTILS_DEPENDENCIES@
+COINUTILS_LIBS = @COINUTILS_LIBS@
+COINUTILS_LIBS_INSTALLED = @COINUTILS_LIBS_INSTALLED@
 COIN_CC_IS_CL_FALSE = @COIN_CC_IS_CL_FALSE@
 COIN_CC_IS_CL_TRUE = @COIN_CC_IS_CL_TRUE@
 COIN_CXX_IS_CL_FALSE = @COIN_CXX_IS_CL_FALSE@
 COIN_CXX_IS_CL_TRUE = @COIN_CXX_IS_CL_TRUE@
+COIN_HAS_COINUTILS_FALSE = @COIN_HAS_COINUTILS_FALSE@
+COIN_HAS_COINUTILS_TRUE = @COIN_HAS_COINUTILS_TRUE@
 COIN_HAS_DOXYGEN_FALSE = @COIN_HAS_DOXYGEN_FALSE@
 COIN_HAS_DOXYGEN_TRUE = @COIN_HAS_DOXYGEN_TRUE@
 COIN_HAS_LATEX_FALSE = @COIN_HAS_LATEX_FALSE@
 COIN_HAS_LATEX_TRUE = @COIN_HAS_LATEX_TRUE@
-COIN_SKIP_PROJECTS = @COIN_SKIP_PROJECTS@
+COIN_HAS_OSICONIC_FALSE = @COIN_HAS_OSICONIC_FALSE@
+COIN_HAS_OSICONIC_TRUE = @COIN_HAS_OSICONIC_TRUE@
+COIN_HAS_OSICPX_FALSE = @COIN_HAS_OSICPX_FALSE@
+COIN_HAS_OSICPX_TRUE = @COIN_HAS_OSICPX_TRUE@
+COIN_HAS_OSI_FALSE = @COIN_HAS_OSI_FALSE@
+COIN_HAS_OSI_TRUE = @COIN_HAS_OSI_TRUE@
+COIN_HAS_PKGCONFIG_FALSE = @COIN_HAS_PKGCONFIG_FALSE@
+COIN_HAS_PKGCONFIG_TRUE = @COIN_HAS_PKGCONFIG_TRUE@
+COIN_PKG_CONFIG_PATH = @COIN_PKG_CONFIG_PATH@
+COIN_PKG_CONFIG_PATH_UNINSTALLED = @COIN_PKG_CONFIG_PATH_UNINSTALLED@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
@@ -124,7 +151,6 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DBG_CFLAGS = @DBG_CFLAGS@
 DBG_CXXFLAGS = @DBG_CXXFLAGS@
-DBG_FFLAGS = @DBG_FFLAGS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEPENDENCY_LINKING_FALSE = @DEPENDENCY_LINKING_FALSE@
@@ -158,11 +184,38 @@ MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MPICC = @MPICC@
 MPICXX = @MPICXX@
-MPIF77 = @MPIF77@
 OBJEXT = @OBJEXT@
 OPT_CFLAGS = @OPT_CFLAGS@
 OPT_CXXFLAGS = @OPT_CXXFLAGS@
-OPT_FFLAGS = @OPT_FFLAGS@
+OSICONIC_CFLAGS = @OSICONIC_CFLAGS@
+OSICONIC_CFLAGS_INSTALLED = @OSICONIC_CFLAGS_INSTALLED@
+OSICONIC_DATA = @OSICONIC_DATA@
+OSICONIC_DATA_INSTALLED = @OSICONIC_DATA_INSTALLED@
+OSICONIC_DEPENDENCIES = @OSICONIC_DEPENDENCIES@
+OSICONIC_LIBS = @OSICONIC_LIBS@
+OSICONIC_LIBS_INSTALLED = @OSICONIC_LIBS_INSTALLED@
+OSICPLEXLIB_CFLAGS = @OSICPLEXLIB_CFLAGS@
+OSICPLEXLIB_CFLAGS_INSTALLED = @OSICPLEXLIB_CFLAGS_INSTALLED@
+OSICPLEXLIB_DEPENDENCIES = @OSICPLEXLIB_DEPENDENCIES@
+OSICPLEXLIB_LIBS = @OSICPLEXLIB_LIBS@
+OSICPLEXLIB_LIBS_INSTALLED = @OSICPLEXLIB_LIBS_INSTALLED@
+OSICPLEXLIB_PCLIBS = @OSICPLEXLIB_PCLIBS@
+OSICPLEXLIB_PCREQUIRES = @OSICPLEXLIB_PCREQUIRES@
+OSICPLEX_SVN_REV = @OSICPLEX_SVN_REV@
+OSICPX_CFLAGS = @OSICPX_CFLAGS@
+OSICPX_CFLAGS_INSTALLED = @OSICPX_CFLAGS_INSTALLED@
+OSICPX_DATA = @OSICPX_DATA@
+OSICPX_DATA_INSTALLED = @OSICPX_DATA_INSTALLED@
+OSICPX_DEPENDENCIES = @OSICPX_DEPENDENCIES@
+OSICPX_LIBS = @OSICPX_LIBS@
+OSICPX_LIBS_INSTALLED = @OSICPX_LIBS_INSTALLED@
+OSI_CFLAGS = @OSI_CFLAGS@
+OSI_CFLAGS_INSTALLED = @OSI_CFLAGS_INSTALLED@
+OSI_DATA = @OSI_DATA@
+OSI_DATA_INSTALLED = @OSI_DATA_INSTALLED@
+OSI_DEPENDENCIES = @OSI_DEPENDENCIES@
+OSI_LIBS = @OSI_LIBS@
+OSI_LIBS_INSTALLED = @OSI_LIBS_INSTALLED@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -170,6 +223,7 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 RPATH_FLAGS = @RPATH_FLAGS@
 SET_MAKE = @SET_MAKE@
@@ -186,6 +240,7 @@ ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
+ac_ct_PKG_CONFIG = @ac_ct_PKG_CONFIG@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 ac_cxx_preproc_warn_flag = @ac_cxx_preproc_warn_flag@
@@ -216,6 +271,7 @@ exec_prefix = @exec_prefix@
 have_autoconf = @have_autoconf@
 have_automake = @have_automake@
 have_svn = @have_svn@
+have_svnversion = @have_svnversion@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -235,31 +291,56 @@ program_transform_name = @program_transform_name@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sol_cc_compiler = @sol_cc_compiler@
-subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+AUTOMAKE_OPTIONS = foreign
+
+########################################################################
+#                               libOsiCplex                            #
+########################################################################
+
+# Name of the library compiled in this directory.  We want it to be installed
+# in the 'lib' directory
 lib_LTLIBRARIES = libOsiCplex.la
-libOsiCplex_la_SOURCES = OsiCplexSolverInterface.hpp\
+
+# List all source files for this library, including headers
+libOsiCplex_la_SOURCES = \
+	OsiCplexSolverInterface.hpp\
 	OsiCplexSolverInterface.cpp
 
-libOsiCplex_la_LIBADD = \
-	$(OSICONIC_LIBS)\
-	$(OSICPLEX_LIBS)\
-	$(OSI_LIBS)\
-	$(COINUTILS_LIBS)\
-	$(LIBS)
 
-AM_CPPFLAGS = \
-	-I../../include\
-	$(OSICONIC_CFLAGS)\
-	$(OSICPLEX_LIBS)\
-	$(OSI_CFLAGS)\
-	$(COINUTILS_CFLAGS)
+# List all additionally required libraries
+@DEPENDENCY_LINKING_TRUE@libOsiCplex_la_LIBADD = $(OSICPLEXLIB_LIBS)
+
+# This is for libtool
+libOsiCplex_la_LDFLAGS = $(LT_LDFLAGS)
+
+# Here list all include flags.
+AM_CPPFLAGS = $(COINUTILS_CFLAGS)\
+	 $(OSI_CFLAGS)\
+	 $(OSICPX_CFLAGS)\
+	 $(OSICONIC_CFLAGS)
 
 
-# header files to be installed to $(includedir)
-include_HEADERS = OsiCplexSolverInterface.hpp
-all: all-am
+########################################################################
+#                            Additional flags                          #
+########################################################################
+
+# This line is necessary to allow VPATH compilation
+DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
+
+########################################################################
+#                Headers that need to be installed                     #
+########################################################################
+
+# Here list all the header files that are required by a user of the library,
+# and that therefore should be installed in 'include/coin'
+includecoindir = $(includedir)/coin
+includecoin_HEADERS = \
+	OsiCplexSolverInterface.hpp
+
+all: config.h config_osicplex.h
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
@@ -272,9 +353,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  src/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/Makefile
+	  $(AUTOMAKE) --foreign  src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -292,6 +373,33 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+
+config.h: stamp-h1
+	@if test ! -f $@; then \
+	  rm -f stamp-h1; \
+	  $(MAKE) stamp-h1; \
+	else :; fi
+
+stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+	@rm -f stamp-h1
+	cd $(top_builddir) && $(SHELL) ./config.status src/config.h
+$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) 
+	cd $(top_srcdir) && $(AUTOHEADER)
+	rm -f stamp-h1
+	touch $@
+
+config_osicplex.h: stamp-h2
+	@if test ! -f $@; then \
+	  rm -f stamp-h2; \
+	  $(MAKE) stamp-h2; \
+	else :; fi
+
+stamp-h2: $(srcdir)/config_osicplex.h.in $(top_builddir)/config.status
+	@rm -f stamp-h2
+	cd $(top_builddir) && $(SHELL) ./config.status src/config_osicplex.h
+
+distclean-hdr:
+	-rm -f config.h stamp-h1 config_osicplex.h stamp-h2
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
@@ -360,22 +468,22 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
-install-includeHEADERS: $(include_HEADERS)
+install-includecoinHEADERS: $(includecoin_HEADERS)
 	@$(NORMAL_INSTALL)
-	test -z "$(includedir)" || $(mkdir_p) "$(DESTDIR)$(includedir)"
-	@list='$(include_HEADERS)'; for p in $$list; do \
+	test -z "$(includecoindir)" || $(mkdir_p) "$(DESTDIR)$(includecoindir)"
+	@list='$(includecoin_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " $(includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includedir)/$$f'"; \
-	  $(includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includedir)/$$f"; \
+	  echo " $(includecoinHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includecoindir)/$$f'"; \
+	  $(includecoinHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includecoindir)/$$f"; \
 	done
 
-uninstall-includeHEADERS:
+uninstall-includecoinHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(include_HEADERS)'; for p in $$list; do \
+	@list='$(includecoin_HEADERS)'; for p in $$list; do \
 	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(includedir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(includedir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(includecoindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(includecoindir)/$$f"; \
 	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -388,11 +496,11 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES) config.h.in config_osicplex.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in config_osicplex.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -404,11 +512,11 @@ TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES) config.h.in config_osicplex.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in config_osicplex.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -455,9 +563,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(HEADERS) config.h config_osicplex.h
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includecoindir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -493,7 +601,7 @@ distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-hdr distclean-libtool distclean-tags
 
 dvi: dvi-am
 
@@ -505,9 +613,9 @@ info: info-am
 
 info-am:
 
-install-data-am: install-includeHEADERS
+install-data-am: install-includecoinHEADERS
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-exec-local install-libLTLIBRARIES
 
 install-info: install-info-am
 
@@ -533,26 +641,30 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-includeHEADERS uninstall-info-am \
-	uninstall-libLTLIBRARIES
+uninstall-am: uninstall-includecoinHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-local
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
 	clean-libLTLIBRARIES clean-libtool ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-includeHEADERS install-info \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-exec install-exec-am \
+	install-exec-local install-includecoinHEADERS install-info \
 	install-info-am install-libLTLIBRARIES install-man \
 	install-strip installcheck installcheck-am installdirs \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-includeHEADERS uninstall-info-am \
-	uninstall-libLTLIBRARIES
+	uninstall-includecoinHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-local
 
 
-# this are in the disctribution but not in include
-#noinst_HEADERS=
+install-exec-local:
+	$(install_sh_DATA) config_osicplex.h $(DESTDIR)$(includecoindir)/OsiCplexConfig.h
+
+uninstall-local:
+	rm -f $(DESTDIR)$(includecoindir)/OsiCplexConfig.h
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

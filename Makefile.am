@@ -6,16 +6,45 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-EXTRA_DIST = doxydoc/doxygen.conf
-
 ########################################################################
 #                          Subdirectories                              #
 ########################################################################
 
 # subdirs is set by configure as the list of all subdirectories to recurse
 # into
-SUBDIRS = $(subdirs) src
+SUBDIRS = src
 
 ########################################################################
-#                           Extra Targets                              #
+#                    Creation of the addlibs file                      #
 ########################################################################
+
+pkgconfiglibdir = $(libdir)/pkgconfig
+pkgconfiglib_DATA = osicplex.pc
+
+addlibsdir = $(DESTDIR)$(datadir)/coin/doc/OsiCplex
+
+install-data-hook:
+	@$(mkdir_p) "$(addlibsdir)"
+if COIN_HAS_PKGCONFIG
+	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@ \
+	$(PKG_CONFIG) --libs osicplex > $(addlibsdir)/osicplex_addlibs.txt
+else
+if COIN_CXX_IS_CL
+	echo "-libpath:`$(CYGPATH_W) @abs_lib_dir@` libOsiCplex.lib @OSICPLEXLIB_LIBS_INSTALLED@" > $(addlibsdir)/osicplex_addlibs.txt
+else
+	echo -L@abs_lib_dir@ -lOsiCplex @OSICPLEXLIB_LIBS_INSTALLED@ > $(addlibsdir)/osicplex_addlibs.txt
+endif
+endif
+
+uninstall-hook:
+	rm -f $(addlibsdir)/osicplex_addlibs.txt
+
+########################################################################
+#                         Maintainer Stuff                             #
+########################################################################
+
+CLEANFILES =
+# Files that are generated and should be cleaned with make distclean
+DISTCLEANFILES =
+EXTRA_DIST =
+include BuildTools/Makemain.inc
