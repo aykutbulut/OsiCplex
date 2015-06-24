@@ -1,0 +1,11 @@
+prefix=@prefix@
+libdir=@prefix@/lib
+includedir=@prefix@/include
+
+Name: OsiCplex
+Description: Osi Cplex Solver Interface
+URL: https://github.com/aykutbulut/OsiCplex
+Version: @PACKAGE_VERSION@
+Requires: osiconic osi-cplex osi coinutils
+Libs: -L${libdir} -lOsiCplex
+Cflags: -I${includedir}
