@@ -3,10 +3,10 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@/coin
 
-Name: OsiMosek
-Description: Osi Mosek Solver Interface
-URL: https://github.com/aykutbulut/OSI-MOSEK
+Name: OsiCplex
+Description: Osi Cplex Solver Interface
+URL: https://github.com/aykutbulut/OSI-CPLEX
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lOsiMosek @OSIMOSEKLIB_PCLIBS@
+Libs: -L${libdir} -lOsiCplex @OSICPLEXLIB_PCLIBS@
 Cflags: -I${includedir}
-Requires: @OSIMOSEKLIB_PCREQUIRES@
+Requires: @OSICPLEXLIB_PCREQUIRES@
