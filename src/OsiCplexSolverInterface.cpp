@@ -5,17 +5,47 @@
 
 // default constructor
 OsiCplexSolverInterface::OsiCplexSolverInterface(): OsiCpxSolverInterface() {
+  CPXENVptr env = getEnvironmentPtr();
+  // set parameter number of threads to 1, CPXPARAM_Threads
+  CPXINT num_threads = 1;
+  CPXINT status;
+  // Name prior to V12.6.0 is CPX_PARAM_THREADS, we assume V12.6.0 or later
+  status = CPXsetintparam(env, CPXPARAM_Threads, num_threads);
+  if (status) {
+    std::cerr << "Cplex status error!" << std::endl;
+    throw std::exception();
+  }
 }
 
 // copy constructor
 OsiCplexSolverInterface::OsiCplexSolverInterface(const OsiCplexSolverInterface & other):
   OsiCpxSolverInterface(other) {
+  CPXENVptr env = getEnvironmentPtr();
+  // set parameter number of threads to 1, CPXPARAM_Threads
+  CPXINT num_threads = 1;
+  CPXINT status;
+  // Name prior to V12.6.0 is CPX_PARAM_THREADS, we assume V12.6.0 or later
+  status = CPXsetintparam(env, CPXPARAM_Threads, num_threads);
+  if (status) {
+    std::cerr << "Cplex status error!" << std::endl;
+    throw std::exception();
+  }
 }
 
 // copy assignment operator
 OsiCplexSolverInterface & OsiCplexSolverInterface::operator=(const OsiCplexSolverInterface & rhs) {
   // copy rhs to this
   OsiCpxSolverInterface::operator=(rhs);
+  CPXENVptr env = getEnvironmentPtr();
+  // set parameter number of threads to 1, CPXPARAM_Threads
+  CPXINT num_threads = 1;
+  CPXINT status;
+  // Name prior to V12.6.0 is CPX_PARAM_THREADS, we assume V12.6.0 or later
+  status = CPXsetintparam(env, CPXPARAM_Threads, num_threads);
+  if (status) {
+    std::cerr << "Cplex status error!" << std::endl;
+    throw std::exception();
+  }
   return *this;
 }
 
