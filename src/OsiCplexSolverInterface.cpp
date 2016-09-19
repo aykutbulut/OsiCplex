@@ -51,7 +51,7 @@ OsiCplexSolverInterface & OsiCplexSolverInterface::operator=(const OsiCplexSolve
 
 // get conic constraints
 void OsiCplexSolverInterface::getConicConstraint(int index,
-						 OsiLorentzConeType & type,
+                                                 OsiLorentzConeType & type,
                                                  int & numMembers,
                                                  int *& members) const {
   int ok = 0;
@@ -115,8 +115,8 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
 
 // add conic constraint in lorentz cone form
 void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
-						 int numMembers,
-					       const int * members) {
+                                                 int numMembers,
+                                               const int * members) {
   if (type==OSI_RQUAD) {
     std::cerr << "Rotated Cones are not implemented yet!" << std::endl;
     throw std::exception();
@@ -134,13 +134,21 @@ void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
     std::cerr << "Cplex function is not successful." << std::endl;
     throw std::exception();
   }
+  // leading variable is nonnegative
+  double bound[] = {0.0};
+  char lu[] = {'L'};
+  status = CPXchgbds (env, lp, 1, members, lu, bound);
+  if (status != 0) {
+    std::cerr << "Cplex function is not successful." << std::endl;
+    throw std::exception();
+  }
 }
 
 // add conic constraint in |Ax-b| <= dx-h form
 void OsiCplexSolverInterface::addConicConstraint(CoinPackedMatrix const * A,
-						 CoinPackedVector const * b,
-						 CoinPackedVector const * d,
-						 double h) {
+                                                 CoinPackedVector const * b,
+                                                 CoinPackedVector const * d,
+                                                 double h) {
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
@@ -152,9 +160,9 @@ void OsiCplexSolverInterface::removeConicConstraint(int index) {
 }
 
 void OsiCplexSolverInterface::modifyConicConstraint(int index,
-						    OsiLorentzConeType type,
-						    int numMembers,
-						    const int * members) {
+                                                    OsiLorentzConeType type,
+                                                    int numMembers,
+                                                    const int * members) {
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
@@ -213,7 +221,7 @@ OsiCplexSolverInterface::~OsiCplexSolverInterface() {
 }
 
 int OsiCplexSolverInterface::readMps(const char * filename,
-				     const char * extension) {
+                                     const char * extension) {
   OsiConicSolverInterface::readMps(filename, extension);
 }
 
