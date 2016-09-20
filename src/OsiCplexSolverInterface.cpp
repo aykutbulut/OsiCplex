@@ -3,6 +3,26 @@
 #include <cplex.h>
 //#include <algorithm>
 
+// todo(aykut)
+// error check routine. Copied from OsiCpxSolverInterface.
+// I am not sure whether this is a license violation. This
+// may be removed/replaced in future.
+// I would not experince any problem if this function was not static
+// in OsiCpxSolverInterface.cpp. Since it is, I have to copy it here
+// and create redundancy.
+static inline void
+checkCPXerror(int err, std::string cpxfuncname, std::string osimethod) {
+  if(err != 0) {
+    char s[100];
+    sprintf( s, "%s returned error %d", cpxfuncname.c_str(), err );
+#ifdef DEBUG
+    std::cerr << "ERROR: " << s << " (" << osimethod << " in OsiCpxSolverInterface)" << std::endl;
+#endif
+    throw CoinError(s, osimethod.c_str(), "OsiCplexSolverInterface");
+  }
+}
+
+
 // default constructor
 OsiCplexSolverInterface::OsiCplexSolverInterface(): OsiCpxSolverInterface() {
   CPXENVptr env = getEnvironmentPtr();
@@ -117,29 +137,53 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
 void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
                                                  int numMembers,
                                                const int * members) {
-  if (type==OSI_RQUAD) {
-    std::cerr << "Rotated Cones are not implemented yet!" << std::endl;
-    throw std::exception();
-  }
   int status;
   CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
-  double * qval = new double[numMembers];
-  qval[0] = -1.0;
-  std::fill_n(qval+1, numMembers-1, 1.0);
-  status = CPXaddqconstr (env, lp, 0, numMembers,
-                          0.0, 'L', NULL, NULL,
-                          members, members, qval, NULL);
-  if (status != 0) {
-    std::cerr << "Cplex function is not successful." << std::endl;
-    throw std::exception();
+  if (type==OSI_QUAD) {
+    double * qval = new double[numMembers];
+    qval[0] = -1.0;
+    std::fill_n(qval+1, numMembers-1, 1.0);
+    status = CPXaddqconstr (env, lp, 0, numMembers,
+                            0.0, 'L', NULL, NULL,
+                            members, members, qval, NULL);
+    delete[] qval;
+    checkCPXerror(status, std::string("CPXaddqconstr"),
+                  std::string("addConicConstraint"));
+    // leading variable is nonnegative
+    double bound[] = {0.0};
+    char lu[] = {'L'};
+    status = CPXchgbds (env, lp, 1, members, lu, bound);
+    checkCPXerror(status, std::string("CPXchgbds"),
+                  std::string("addConicConstraint"));
   }
-  // leading variable is nonnegative
-  double bound[] = {0.0};
-  char lu[] = {'L'};
-  status = CPXchgbds (env, lp, 1, members, lu, bound);
-  if (status != 0) {
-    std::cerr << "Cplex function is not successful." << std::endl;
+  else if (type==OSI_RQUAD) {
+    double * qval = new double[numMembers-1];
+    qval[0] = -2.0;
+    std::fill_n(qval+1, numMembers-1, 1.0);
+    int * members2 = new int[numMembers-1];
+    members2[0] = members[0];
+    std::copy(members+2, members+numMembers, members2+1);
+    status = CPXaddqconstr (env, lp, 0, numMembers-1,
+                            0.0, 'L', NULL, NULL,
+                            members+1, members2, qval, NULL);
+    delete[] qval;
+    delete[] members2;
+    checkCPXerror(status, std::string("CPXaddqconstr"),
+                  std::string("addConicConstraint"));
+    // leading variable is nonnegative
+    double bound[] = {0.0};
+    char lu[] = {'L'};
+    // update lower bound to 0 for leading variables
+    status = CPXchgbds (env, lp, 1, members, lu, bound);
+    checkCPXerror(status, std::string("CPXchgbds"),
+                  std::string("addConicConstraint"));
+    status = CPXchgbds (env, lp, 1, members+1, lu, bound);
+    checkCPXerror(status, std::string("CPXchgbds"),
+                  std::string("addConicConstraint"));
+  }
+  else {
+    std::cerr << "Unknown cone type!" << std::endl;
     throw std::exception();
   }
 }
