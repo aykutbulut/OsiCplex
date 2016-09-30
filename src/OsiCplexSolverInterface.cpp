@@ -270,7 +270,7 @@ int OsiCplexSolverInterface::readMps(const char * filename,
 }
 
 void OsiCplexSolverInterface::initialSolve() {
-  //todo(aykut) I am not sure what switchToLp() does.
+  // ignore integer constraints
   switchToLP();
   CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
@@ -298,6 +298,15 @@ void OsiCplexSolverInterface::initialSolve() {
     if (dualobjlimit < COIN_DBL_MAX)
       CPXsetdblparam(env, CPX_PARAM_OBJLLIM, dualobjlimit + objoffset);
   }
+  // set log level to 0 if reduce print
+  bool reduce_print;
+  OsiHintStrength strength;
+  getHintParam(OsiDoReducePrint, reduce_print, strength);
+  if (reduce_print) {
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 0);
+    //CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+    CPXsetintparam(env, CPX_PARAM_BARDISPLAY, 0);
+  }
   int status = CPXhybbaropt(env, lp, CPX_ALG_NONE);
   if (status!=0) {
     std::cerr << "Cplex did not return 0 status." << std::endl;
@@ -308,7 +317,7 @@ void OsiCplexSolverInterface::initialSolve() {
 //-----------------------------------------------------------------------------
 // resolve is same as initialSolve, no warm start capability.
 void OsiCplexSolverInterface::resolve() {
-  //todo(aykut) I am not sure what switchToLp() does.
+  // ignore integer constraints
   switchToLP();
   CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
@@ -318,6 +327,15 @@ void OsiCplexSolverInterface::resolve() {
     CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 1);
   else if (messageHandler()->logLevel() > 1)
     CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 2);
+  // set log level to 0 if reduce print
+  bool reduce_print;
+  OsiHintStrength strength;
+  getHintParam(OsiDoReducePrint, reduce_print, strength);
+  if (reduce_print) {
+    CPXsetintparam(env, CPX_PARAM_SIMDISPLAY, 0);
+    //CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+    CPXsetintparam(env, CPX_PARAM_BARDISPLAY, 0);
+  }
   int status = CPXhybbaropt(env, lp, CPX_ALG_NONE);
   if (status!=0) {
     std::cerr << "Cplex did not return 0 status." << std::endl;
