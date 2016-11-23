@@ -25,7 +25,7 @@ public:
   // add conic constraint in lorentz cone form
   virtual void addConicConstraint(OsiLorentzConeType type,
                                   int numMembers,
-                                  const int * members);
+                                  int const * members);
   // add conic constraint in |Ax-b| <= dx-h form
   virtual void addConicConstraint(CoinPackedMatrix const * A, CoinPackedVector const * b,
                                   CoinPackedVector const * d, double h);

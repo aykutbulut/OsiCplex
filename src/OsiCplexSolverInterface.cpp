@@ -31,10 +31,8 @@ OsiCplexSolverInterface::OsiCplexSolverInterface(): OsiCpxSolverInterface() {
   CPXINT status;
   // Name prior to V12.6.0 is CPX_PARAM_THREADS, we assume V12.6.0 or later
   status = CPXsetintparam(env, CPXPARAM_Threads, num_threads);
-  if (status) {
-    std::cerr << "Cplex status error!" << std::endl;
-    throw std::exception();
-  }
+  checkCPXerror(status, std::string("CPXsetintparam"),
+                std::string("OsiCplexSolverInterface"));
 }
 
 // copy constructor
@@ -46,9 +44,16 @@ OsiCplexSolverInterface::OsiCplexSolverInterface(const OsiCplexSolverInterface &
   CPXINT status;
   // Name prior to V12.6.0 is CPX_PARAM_THREADS, we assume V12.6.0 or later
   status = CPXsetintparam(env, CPXPARAM_Threads, num_threads);
-  if (status) {
-    std::cerr << "Cplex status error!" << std::endl;
-    throw std::exception();
+  checkCPXerror(status, std::string("CPXsetintparam"),
+                std::string("OsiCplexSolverInterface"));
+  // add conic constraints
+  for (int i=0; i<other.getNumCones(); ++i) {
+    OsiLorentzConeType type;
+    int size;
+    int * members = 0;
+    other.getConicConstraint(i, type, size, members);
+    addConicConstraint(type, size, members);
+    delete[] members;
   }
 }
 
@@ -74,14 +79,13 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
                                                  OsiLorentzConeType & type,
                                                  int & numMembers,
                                                  int *& members) const {
-  int ok = 0;
   // cplex status, 0 for success
   int status;
   // number of linear part nonzeros
-  int linnz;
+  int linnz = 0;
   int linsurplus = 0;
   // number of quadratic part nonzeros
-  int qnz;
+  int qnz = 0;
   numMembers = 0;
   CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getMutableEnvironmentPtr();
@@ -89,20 +93,12 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
   status = CPXgetqconstr(env, lp, &linnz, &qnz, NULL, NULL,
                          NULL, NULL, 0, &linsurplus,
                          NULL, NULL, NULL, 0, &numMembers, index);
-  if (status==0) {
-    // means number of variables in cone is 0.
-    return;
+  if (status == CPXERR_NEGATIVE_SURPLUS) {
+    numMembers = -numMembers;
   }
-  else if (status == CPXERR_NEGATIVE_SURPLUS) {
-    // linear or quadratic cone size was not enough
-    if (numMembers==0) {
-      // cone size was enough, means no member in cone
-      return;
-    }
-    else {
-      // cone size is greater than 0
-      numMembers = -numMembers;
-    }
+  else {
+    std::cerr << "Cone is size 0, this is a problem!" << std::endl;
+    throw std::exception();
   }
   // allocate memory for quadratic part
   int * qrow = new int[numMembers];
@@ -113,40 +109,69 @@ void OsiCplexSolverInterface::getConicConstraint(int index,
   status = CPXgetqconstr(env, lp, &linnz, &qnz, NULL, NULL,
                          NULL, NULL, 0, &linsurplus,
                          qrow, qcol, qval, numMembers, &qsurplus, index);
-  if (status!=0 && status!=CPXERR_NEGATIVE_SURPLUS) {
-    std::cerr << "Cplex status error!" << std::endl;
-    throw std::exception();
-  }
-  if (qsurplus<0) {
-    std::cerr << "This should not happen. Cplex cheated!" << std::endl;
-    throw std::exception();
-  }
-  members = qcol;
-  delete[] qrow;
-  if (qval[0]==-1.0 && qval[1]==1.0) {
+  checkCPXerror(status, std::string("CPXgetqconstr"),
+                std::string("getConicConstraint"));
+  if (qval[0]==-1.0) {
+    // quad constraint is as follows
+    // size is numMembers
+    // qrow: m[0] m[1] m[2] ... m[numMembers-1]
+    // qcol: m[0] m[1] m[2] ... m[numMembers-1]
+    // qval:  -1   1    1   ... 1.0
+    //
     type = OSI_QUAD;
+    members = qrow;
+    delete[] qcol;
+    delete[] qval;
+  }
+  else if (qval[0]==-2.0) {
+    // quad constraint is as follows
+    // size is numMembers-1
+    // index:  0    1    2        numMembers-2
+    // qrow: m[0] m[2] m[3] ... m[numMembers-1]
+    // qcol: m[1] m[2] m[3] ... m[numMembers-1]
+    // qval:  -2   1    1   ... 1.0
+    //
+    type = OSI_RQUAD;
+    numMembers++;
+    members = new int[numMembers];
+    members[0] = qrow[0];
+    std::copy(qcol, qcol+numMembers-1, members+1);
+    delete[] qrow;
+    delete[] qcol;
+    delete[] qval;
   }
   else {
-    std::cerr << "This part is not implemented yet!" << std::endl;
+    delete[] qrow;
+    delete[] qcol;
+    delete[] qval;
+    std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
+    std::cerr << "This should not happen!" << std::endl;
     throw std::exception();
   }
-  delete[] qval;
 }
 
 // add conic constraint in lorentz cone form
 void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
                                                  int numMembers,
-                                               const int * members) {
+                                                 int const * members) {
   int status;
   CPXLPptr lp = getMutableLpPtr();
   CPXENVptr env = getEnvironmentPtr();
   if (type==OSI_QUAD) {
+    // quad constraint is as follows
+    // size is numMembers
+    // qrow: m[0] m[1] m[2] ... m[numMembers-1]
+    // qcol: m[0] m[1] m[2] ... m[numMembers-1]
+    // qval:  -1   1    1   ... 1.0
+    //
+    int const * qrow = members;
+    int const * qcol = members;
     double * qval = new double[numMembers];
     qval[0] = -1.0;
     std::fill_n(qval+1, numMembers-1, 1.0);
     status = CPXaddqconstr (env, lp, 0, numMembers,
                             0.0, 'L', NULL, NULL,
-                            members, members, qval, NULL);
+                            qrow, qcol, qval, NULL);
     delete[] qval;
     checkCPXerror(status, std::string("CPXaddqconstr"),
                   std::string("addConicConstraint"));
@@ -158,17 +183,28 @@ void OsiCplexSolverInterface::addConicConstraint(OsiLorentzConeType type,
                   std::string("addConicConstraint"));
   }
   else if (type==OSI_RQUAD) {
+    // quad constraint is as follows
+    // size is numMembers-1
+    // index:  0    1    2        numMembers-2
+    // qrow: m[0] m[2] m[3] ... m[numMembers-1]
+    // qcol: m[1] m[2] m[3] ... m[numMembers-1]
+    // qval:  -2   1    1   ... 1.0
+    //
+    int * qrow = new int[numMembers-1];
+    int * qcol = new int[numMembers-1];
     double * qval = new double[numMembers-1];
+    qrow[0] = members[0];
+    std::copy(members+2, members+numMembers, qrow+1);
+    qcol[0] = members[1];
+    std::copy(members+2, members+numMembers, qcol+1);
     qval[0] = -2.0;
-    std::fill_n(qval+1, numMembers-1, 1.0);
-    int * members2 = new int[numMembers-1];
-    members2[0] = members[0];
-    std::copy(members+2, members+numMembers, members2+1);
+    std::fill_n(qval+1, numMembers-2, 1.0);
     status = CPXaddqconstr (env, lp, 0, numMembers-1,
                             0.0, 'L', NULL, NULL,
-                            members+1, members2, qval, NULL);
+                            qrow, qcol, qval, NULL);
+    delete[] qrow;
+    delete[] qcol;
     delete[] qval;
-    delete[] members2;
     checkCPXerror(status, std::string("CPXaddqconstr"),
                   std::string("addConicConstraint"));
     // leading variable is nonnegative
@@ -193,12 +229,14 @@ void OsiCplexSolverInterface::addConicConstraint(CoinPackedMatrix const * A,
                                                  CoinPackedVector const * b,
                                                  CoinPackedVector const * d,
                                                  double h) {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
 
 
 void OsiCplexSolverInterface::removeConicConstraint(int index) {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
@@ -207,6 +245,7 @@ void OsiCplexSolverInterface::modifyConicConstraint(int index,
                                                     OsiLorentzConeType type,
                                                     int numMembers,
                                                     const int * members) {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
@@ -221,22 +260,70 @@ int OsiCplexSolverInterface::getNumCones() const {
 }
 
 int OsiCplexSolverInterface::getConeSize(int i) const {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
 
 OsiConeType OsiCplexSolverInterface::getConeType(int i) const {
-  std::cerr << "Not implemented yet!" << std::cerr;
-  throw std::exception();
+  CPXLPptr lp = getMutableLpPtr();
+  CPXENVptr env = getMutableEnvironmentPtr();
+  int linnz = 0;
+  int qnz = 0;
+  int linsurplus;
+  int qsurplus;
+  int lcap;
+  int qcap;
+  CPXINT status;
+  /* Call CPXgetqconstr() a first time with zero-length buffers to figure
+   * how long the buffers must be.
+   */
+  status = CPXgetqconstr (env, lp, &linnz, &qnz, NULL, NULL,
+                          NULL, NULL, 0, &linsurplus,
+                          NULL, NULL, NULL, 0, &qsurplus, i);
+  if (status!=CPXERR_NEGATIVE_SURPLUS) {
+    checkCPXerror(status, std::string("CPXgetqconstr"),
+                  std::string("getConeType"));
+  }
+  else {
+    lcap = -linsurplus;
+    qcap = -qsurplus;
+    linnz = -linsurplus;
+    qnz = -qsurplus;
+  }
+  int * qcol = new int[qcap];
+  int * qrow = new int[qcap];
+  double * qval = new double[qcap];
+  double rhs;
+  char sense;
+  status = CPXgetqconstr (env, lp, &linnz, &qnz, &rhs,
+                          &sense,
+                          0, 0, 0, &linsurplus,
+                          qrow, qcol, qval, qcap,
+                          &qsurplus, i);
+  checkCPXerror(status, std::string("CPXgetqconstr"),
+                std::string("getConeType"));
+  // check qval[0], if -1 QUAD, if -2 RQUAD
+  if (qval[0]==-1.0) {
+  }
+  else if (qval[0]==-2.0) {
+  }
+  else {
+    std::cerr << "This should not happen!" << std::endl;
+    throw std::exception();
+  }
+  return OSI_LORENTZ;
 }
 
 OsiLorentzConeType OsiCplexSolverInterface::getLorentzConeType(int i) const {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
 
 // fills array of cone sizes.
 void OsiCplexSolverInterface::getConeSize(int * size) const {
+  std::cerr << "file: " << __FILE__ << " line: " << __LINE__ << std::endl;
   std::cerr << "Not implemented yet!" << std::cerr;
   throw std::exception();
 }
@@ -257,8 +344,8 @@ void OsiCplexSolverInterface::getConeType(OsiLorentzConeType * type) const {
 }
 
 OsiConicSolverInterface * OsiCplexSolverInterface::clone(bool copyData) const {
-  std::cerr << "Not implemented yet!" << std::cerr;
-  throw std::exception();
+  OsiConicSolverInterface * new_solver = new OsiCplexSolverInterface(*this);
+  return new_solver;
 }
 
 OsiCplexSolverInterface::~OsiCplexSolverInterface() {
